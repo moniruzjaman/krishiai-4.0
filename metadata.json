@@ -1,0 +1,9 @@
+{
+  "name": "Krishi AI 4.0",
+  "description": "বাংলাদেশের কৃষকদের জন্য একটি সমন্বিত এআই ইকোসিস্টেম। স্মার্ট রোগ নির্ণয়, স্যাটেলাইট মনিটরিং এবং বৈজ্ঞানিক পঞ্জিকা—সবই এখন এক জায়গায়।",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}

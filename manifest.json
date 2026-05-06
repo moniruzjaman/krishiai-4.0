@@ -1,0 +1,24 @@
+{
+  "short_name": "Krishi AI 4.0",
+  "name": "Krishi AI 4.0: Smart Agri Ecosystem",
+  "description": "বাংলাদেশের কৃষকদের জন্য এআই চালিত আধুনিক কৃষি সমাধান।",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMTAwIDEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjI1IiBmaWxsPSIjMEE4QTFGIi8+PHBhdGggZD0iTTI1IDQwQzI1IDY4IDUwIDg1IDUwIDg1QzUwIDg1IDc1IDY4IDc1IDQwQzc1IDIyIDYyIDE1IDUwIDE1QzM4IDE1IDI1IDIyIDI1IDQwWiIgZmlsbD0id2hpdGUiLz48cGF0aCBkPSJNNTAgODVDNTAgODUgNjcgNzAgNjcgNDVDNjcgMzAgNTggMjUgNTAgMjVDNDIgMjUgMzMgMzAgMzMgNDVDMzMgNzAgNTAgODUgNTAgODVaIiBmaWxsPSIjMEE4QTFGIi8+PC9zdmc+",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMTAwIDEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjI1IiBmaWxsPSIjMEE4QTFGIi8+PHBhdGggZD0iTTI1IDQwQzI1IDY4IDUwIDg1IDUwIDg1QzUwIDg1IDc1IDY4IDc1IDQwQzc1IDIyIDYyIDE1IDUwIDE1QzM4IDE1IDI1IDIyIDI1IDQwWiIgZmlsbD0id2hpdGUiLz48cGF0aCBkPSJNNTAgODVDNTAgODUgNjcgNzAgNjcgNDVDNjcgMzAgNTggMjUgNTAgMjVDNDIgMjUgMzMgMzAgMzMgNDVDMzMgNzAgNTAgODUgNTAgODVaIiBmaWxsPSIjMEE4QTFGIi8+PC9zdmc+",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#0A8A1F",
+  "background_color": "#ffffff",
+  "orientation": "portrait"
+}

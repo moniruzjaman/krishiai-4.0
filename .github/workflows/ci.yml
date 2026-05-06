@@ -1,0 +1,35 @@
+name: Krishi AI CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        
+    - name: Install Dependencies
+      run: npm install
+      
+    - name: Build Project
+      run: npm run build
+      env:
+        # Mock keys for build process
+        API_KEY: "build_dummy_key"
+        HF_TOKEN: "build_dummy_token"
+        SUPABASE_KEY: "build_dummy_key"
