@@ -2,6 +2,7 @@ import { GoogleGenAI, Modality, Type } from "@google/genai";
 import { AnalysisResult, FlashCard, UserCrop, WeatherData, CropDiseaseReport, AgriQuizQuestion, Language, MarketPrice } from "../types";
 import { AEZInfo } from "./locationService";
 import { queryQwenVL } from "./huggingfaceService";
+import { executeHybridFallback } from "./hybridAiService";
 
 /**
  * Helper to extract JSON from model output.
@@ -44,7 +45,7 @@ const extractJSON = <T>(text: string, defaultValue: T): T => {
 };
 
 /**
- * Helper to handle Gemini generation with automatic fallback for grounding quota errors.
+ * Helper to handle Gemini generation with automatic fallback for grounding quota errors and other API failures.
  */
 const safeGenerateContent = async (ai: any, model: string, params: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
   try {
@@ -63,12 +64,25 @@ const safeGenerateContent = async (ai: any, model: string, params: any) => { // 
       const { ...restConfig } = params.config || {};
       delete (restConfig as any).tools;
       delete (restConfig as any).toolConfig;
-      return await ai.models.generateContent({
-        model,
-        ...params,
-        config: restConfig
-      });
+      try {
+        return await ai.models.generateContent({
+          model,
+          ...params,
+          config: restConfig
+        });
+      } catch (retryError: any) {
+        // If it STILL fails (e.g., global quota), drop into hybrid fallback
+        console.warn("Primary API retry failed. Attempting hybrid fallback...");
+        return await executeHybridFallback(model, params);
+      }
     }
+    
+    // If it's a general quota or server error, use the Hybrid Modality Fallback
+    if (errorStatus === 429 || errorStatus === 503 || errorStatus === 'RESOURCE_EXHAUSTED') {
+       console.warn("Primary API failed. Attempting hybrid fallback...");
+       return await executeHybridFallback(model, params);
+    }
+    
     throw error;
   }
 };
