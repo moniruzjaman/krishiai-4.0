@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     supabase_url: str = "https://nmngzjrrysjzuxfcklrk.supabase.co"
     supabase_key: str = ""
     hf_token: str = ""
+    openrouter_api_key: str = ""
 
     model_config = SettingsConfigDict(
         env_file=('.env', '.env.example'),

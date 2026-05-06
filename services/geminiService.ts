@@ -388,8 +388,7 @@ export const getCropDiseaseInfo = async (crop: string) => {
     "sourceUsed": "${isRice ? 'BRRI' : 'BARI'} & DAE Official 2026"
   }`;
 
-  const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+  const response = await safeGenerateContent(ai, 'gemini-3-flash-preview', {
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
     config: { 
       systemInstruction: BD_GOVT_GROUNDING_INSTRUCTION,
@@ -403,8 +402,7 @@ export const getCropDiseaseInfo = async (crop: string) => {
 export const analyzeLeafColorAI = async (base64Data: string, mimeType: string): Promise<{ lccValue: number, confidence: number }> => {
   return await withRetry(async () => {
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+    const response = await safeGenerateContent(ai, 'gemini-3-flash-preview', {
       contents: [
         { inlineData: { data: getRawBase64(base64Data), mimeType } },
         { text: "Act as an IRRI Rice expert. Analyze this rice leaf image based on the standard 1-5 panel Leaf Color Chart (LCC). Determine the color index score. Respond strictly in JSON: { \"lccValue\": number, \"confidence\": number }. The lccValue must be between 1 and 5." }
@@ -509,8 +507,7 @@ export const getTrendingMarketPrices = async (lang: Language = 'bn'): Promise<Ma
 
 export const getLCCAnalysisSummary = async (lcc: number, tsr: number, dose: string, lang: 'en' | 'bn' = 'bn') => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+  const response = await safeGenerateContent(ai, 'gemini-3-flash-preview', {
     contents: `LCC Summary: Value ${lcc}, TSR ${tsr}%, Dose ${dose}. Respond in ${lang === 'bn' ? 'Bangla' : 'English'}. START DIRECTLY WITH [${lang === 'bn' ? 'এলসিসি বিশ্লেষণ' : 'LCC Analysis'}].`,
     config: { systemInstruction: BD_GOVT_GROUNDING_INSTRUCTION }
   });
@@ -522,8 +519,7 @@ export const generateSpeech = async (text: string): Promise<string> => {
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     const speechText = text.replace(/[*#_~]/g, '').slice(0, 1000);
     
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-preview-tts",
+    const response = await safeGenerateContent(ai, "gemini-2.5-flash-preview-tts", {
       contents: [{ parts: [{ text: speechText }] }],
       config: {
         responseModalities: [Modality?.AUDIO || 'AUDIO' as any],
@@ -586,8 +582,7 @@ export const searchAgriculturalInfo = async (query: string) => {
 
 export const requestPrecisionParameters = async (base64Data: string, mimeType: string, cropFamily: string, lang: Language = 'bn') => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+  const response = await safeGenerateContent(ai, 'gemini-3-flash-preview', {
     contents: [
       { inlineData: { data: getRawBase64(base64Data), mimeType } },
       { text: `Identify followup questions for ${cropFamily}. JSON array. Language: ${lang === 'bn' ? 'Bangla' : 'English'}.` }
@@ -599,8 +594,7 @@ export const requestPrecisionParameters = async (base64Data: string, mimeType: s
 
 export const requestPesticidePrecisionParameters = async (query: string, lang: Language = 'bn') => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+  const response = await safeGenerateContent(ai, 'gemini-3-flash-preview', {
     contents: `Followup spray questions for ${query}. Return strictly as JSON array. Language: ${lang === 'bn' ? 'Bangla' : 'English'}.`,
     config: { systemInstruction: BD_GOVT_GROUNDING_INSTRUCTION, responseMimeType: "application/json" }
   });
@@ -609,8 +603,7 @@ export const requestPesticidePrecisionParameters = async (query: string, lang: L
 
 export const requestSoilPrecisionParameters = async (inputs: any, aezName: string, lang: Language = 'bn') => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+  const response = await safeGenerateContent(ai, 'gemini-3-flash-preview', {
     contents: `Soil followup questions for ${aezName} considering inputs ${JSON.stringify(inputs)}. JSON array. ${lang === 'bn' ? 'Bangla' : 'English'}.`,
     config: { systemInstruction: BD_GOVT_GROUNDING_INSTRUCTION, responseMimeType: "application/json" }
   });
@@ -664,8 +657,7 @@ export const getAIYieldPrediction = async (
 
 export const getAIPlantNutrientAdvice = async (crop: string, aez: string, soil: string, area: number, unit: string, lang: Language = 'bn') => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+  const response = await safeGenerateContent(ai, 'gemini-3-flash-preview', {
     contents: `BARC Fertilizer Guide 2024 for ${crop} in ${aez}. Area: ${area} ${unit}. START DIRECTLY WITH [সার সুপারিশ].`,
     config: { systemInstruction: BD_GOVT_GROUNDING_INSTRUCTION, tools: [{ googleSearch: {} }] }
   });
@@ -674,8 +666,7 @@ export const getAIPlantNutrientAdvice = async (crop: string, aez: string, soil: 
 
 export const getBiocontrolExpertAdvice = async (query: string) => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+  const response = await safeGenerateContent(ai, 'gemini-3-flash-preview', {
     contents: `Biocontrol measures for ${query}. START DIRECTLY WITH [জৈবিক পদ্ধতি].`,
     config: { systemInstruction: BD_GOVT_GROUNDING_INSTRUCTION, tools: [{ googleSearch: {} }] }
   });
@@ -684,8 +675,7 @@ export const getBiocontrolExpertAdvice = async (query: string) => {
 
 export const interpretSoilReportAI = async (inputs: any) => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+  const response = await safeGenerateContent(ai, 'gemini-3-flash-preview', {
     contents: `Interpret soil lab result: ${JSON.stringify(inputs)}. START DIRECTLY WITH [ল্যাব রিপোর্ট বিশ্লেষণ].`,
     config: { systemInstruction: BD_GOVT_GROUNDING_INSTRUCTION, tools: [{ googleSearch: {} }] }
   });
@@ -694,8 +684,7 @@ export const interpretSoilReportAI = async (inputs: any) => {
 
 export const getFieldMonitoringData = async (lat: number, lng: number, areaName: string) => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+  const response = await safeGenerateContent(ai, 'gemini-3-flash-preview', {
     contents: `Satellite Health Monitoring for ${areaName}. START DIRECTLY WITH [স্যাটেলাইট পর্যবেক্ষণ].`,
     config: { systemInstruction: BD_GOVT_GROUNDING_INSTRUCTION, tools: [{ googleSearch: {} }] }
   });
@@ -705,8 +694,7 @@ export const getFieldMonitoringData = async (lat: number, lng: number, areaName:
 export const detectCropFromImage = async (base64Data: string, mimeType: string, cropList: string[]): Promise<string | null> => {
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+    const response = await safeGenerateContent(ai, 'gemini-3-flash-preview', {
       contents: [
         { inlineData: { data: getRawBase64(base64Data), mimeType } },
         { text: `Identify the crop in this image. It must be one of the following: ${cropList.join(', ')}. Respond ONLY with the exact crop name from the list. If you cannot identify it, respond with "Unknown".` }
@@ -725,8 +713,7 @@ export const detectCropFromImage = async (base64Data: string, mimeType: string, 
 
 export const identifyPlantSpecimen = async (base64Data: string, mimeType: string, lang: Language = 'bn') => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+  const response = await safeGenerateContent(ai, 'gemini-3-flash-preview', {
     contents: [
       { inlineData: { data: getRawBase64(base64Data), mimeType } },
       { text: `Identify this botanical specimen. START DIRECTLY WITH [উদ্ভিদ পরিচয়].` }
@@ -741,8 +728,7 @@ export const identifyPlantSpecimen = async (base64Data: string, mimeType: string
 
 export const getAgriFlashCards = async (topic: string) => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+  const response = await safeGenerateContent(ai, 'gemini-3-flash-preview', {
     contents: `Flashcards for ${topic}. JSON.`,
     config: { systemInstruction: BD_GOVT_GROUNDING_INSTRUCTION, responseMimeType: "application/json" }
   });
@@ -751,8 +737,7 @@ export const getAgriFlashCards = async (topic: string) => {
 
 export const getAICropSchedule = async (crop: string, _date: string, _season: string) => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+  const response = await safeGenerateContent(ai, 'gemini-3-flash-preview', {
     contents: `Crop schedule for ${crop}. JSON.`,
     config: { systemInstruction: BD_GOVT_GROUNDING_INSTRUCTION, responseMimeType: "application/json" }
   });
@@ -761,8 +746,7 @@ export const getAICropSchedule = async (crop: string, _date: string, _season: st
 
 export const getAgriMetaExplanation = async (query: string) => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+  const response = await safeGenerateContent(ai, 'gemini-3-flash-preview', {
     contents: `Explain logic for: ${query}. START DIRECTLY WITH [ব্যাখ্যা].`,
     config: { systemInstruction: BD_GOVT_GROUNDING_INSTRUCTION }
   });
@@ -771,8 +755,7 @@ export const getAgriMetaExplanation = async (query: string) => {
 
 export const generateAgriQuiz = async (topic: string, lang: Language = 'bn') => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+  const response = await safeGenerateContent(ai, 'gemini-3-flash-preview', {
     contents: `5 agri questions on ${topic}. JSON.`,
     config: { systemInstruction: BD_GOVT_GROUNDING_INSTRUCTION, responseMimeType: "application/json" }
   });
@@ -781,8 +764,7 @@ export const generateAgriQuiz = async (topic: string, lang: Language = 'bn') => 
 
 export const searchEncyclopedia = async (query: string, lang: Language = 'bn') => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+  const response = await safeGenerateContent(ai, 'gemini-3-flash-preview', {
     contents: `Detail ${query}. START DIRECTLY WITH [তথ্যসারসংক্ষেপ].`,
     config: { systemInstruction: BD_GOVT_GROUNDING_INSTRUCTION, tools: [{ googleSearch: {} }] }
   });
@@ -794,8 +776,7 @@ export const searchEncyclopedia = async (query: string, lang: Language = 'bn') =
 
 export const getPersonalizedAgriAdvice = async (crops: UserCrop[], rank: string) => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+  const response = await safeGenerateContent(ai, 'gemini-3-flash-preview', {
     contents: `Advise for a ${rank} growing: ${crops.map(c => c.name).join(', ')}. START DIRECTLY WITH [পরামর্শ].`,
     config: { systemInstruction: BD_GOVT_GROUNDING_INSTRUCTION, tools: [{ googleSearch: {} }] }
   });
@@ -889,8 +870,7 @@ export const getAgriPodcastSummary = async (topic: string) => {
 
 export const generateAgriImage = async (prompt: string): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash-image',
+  const response = await safeGenerateContent(ai, 'gemini-2.5-flash-image', {
     contents: [{ parts: [{ text: prompt }] }],
     config: { imageConfig: { aspectRatio: "16:9" } }
   });
