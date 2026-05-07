@@ -1,0 +1,10 @@
+declare module '@capacitor/local-notifications';
+declare module '@capacitor/share';
+declare module '@capacitor/camera';
+declare module '@capacitor/filesystem';
+declare module '@capacitor/geolocation';
+declare module '@capacitor/haptics';
+declare module '@capacitor/keyboard';
+declare module '@capacitor/splash-screen';
+declare module '@capacitor/status-bar';
+declare module '@capacitor/app';
