@@ -15,3 +15,4 @@
 *.jpeg binary
 *.svg text
 *.ico binary
+*.jar binary
