@@ -24,12 +24,27 @@ jobs:
         cache: 'npm'
         
     - name: Install Dependencies
-      run: npm install
-      
+      # --ignore-scripts avoids the heavy Chromium (puppeteer) / native (sharp) downloads
+      run: npm install --no-audit --no-fund --ignore-scripts
+
     - name: Build Project
       run: npm run build
       env:
-        # Mock keys for build process
-        API_KEY: "build_dummy_key"
-        HF_TOKEN: "build_dummy_token"
-        SUPABASE_KEY: "build_dummy_key"
+        # Read at build time by vite.config.ts `define` and injected into the
+        # client bundle. Store the REAL values as GitHub Actions repository
+        # secrets (Settings -> Secrets and variables -> Actions). The `|| 'dummy'`
+        # keeps the build green on forks without secrets; AI features simply
+        # won't work until the real keys are provided.
+        API_KEY: ${{ secrets.API_KEY || 'build_dummy_key' }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY || 'build_dummy_key' }}
+        OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY || '' }}
+        HF_TOKEN: ${{ secrets.HF_TOKEN || 'build_dummy_token' }}
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL || '' }}
+        SUPABASE_KEY: ${{ secrets.SUPABASE_KEY || 'build_dummy_key' }}
+
+    - name: Upload production build
+      uses: actions/upload-artifact@v4
+      with:
+        name: krishi-ai-dist
+        path: dist/
+        if-no-files-found: error
