@@ -37,6 +37,10 @@ import { Logo } from './components/Logo';
 import { FarmerAvatar } from './components/FarmerAvatar';
 import ShareDialog from './components/ShareDialog';
 import { syncUserProfile, saveReportToSupabase } from './services/supabase';
+import { useSpeechSynthesis } from './hooks/useSpeechSynthesis';
+import { useNavigation } from './hooks/useNavigation';
+import { useUserProgress } from './hooks/useUserProgress';
+import { useInstallPrompt } from './hooks/useInstallPrompt';
 
 interface SpeechContextType {
   playSpeech: (text: string) => void;
@@ -54,134 +58,63 @@ export const useSpeech = () => {
   return context;
 };
 
+const DEFAULT_USER: User = {
+  uid: 'guest_user',
+  displayName: 'কৃষক বন্ধু',
+  role: 'farmer_entrepreneur',
+  progress: {
+    rank: 'নবিশ কৃষক',
+    level: 1,
+    xp: 120,
+    streak: 3,
+    skills: { soil: 40, protection: 30, technology: 50 }
+  },
+  myCrops: [],
+  savedReports: [],
+  preferredCategories: ['cereals', 'vegetables'],
+  settings: {
+    theme: 'light',
+    notifications: { weather: true, market: true, cropHealth: true }
+  }
+};
+
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>(View.HOME);
   const [lang, setLang] = useState<Language>('bn');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
-  const [installPrompt, setInstallPrompt] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
   const [showSpeechConsent, setShowSpeechConsent] = useState(false);
-  const [sessionXpGain, setSessionXpGain] = useState(0);
+  
+  // Custom hooks for separation of concerns
+  const { user, updateUser, handleAction } = useUserProgress(DEFAULT_USER);
+  const { playSpeech, stopSpeech, isSpeaking, speechEnabled, setSpeechEnabled, handleSpeechConsent } = useSpeechSynthesis(lang);
+  const { handleNavigate } = useNavigation(setCurrentView, stopSpeech, setIsDrawerOpen);
+  const installPrompt = useInstallPrompt();
 
-  const [user, setUser] = useState<User>(() => ({
-    uid: 'guest_user_' + Date.now().toString(36).slice(-5),
-    displayName: 'কৃষক বন্ধু',
-    role: 'farmer_entrepreneur',
-    progress: {
-      rank: 'নবিশ কৃষক',
-      level: 1,
-      xp: 120,
-      streak: 3,
-      skills: { soil: 40, protection: 30, technology: 50 }
-    },
-    myCrops: [],
-    savedReports: [],
-    preferredCategories: ['cereals', 'vegetables'],
-    settings: {
-      theme: 'light',
-      notifications: { weather: true, market: true, cropHealth: true }
-    }
-  }));
-
-  const [speechEnabled, setSpeechEnabled] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-
+  // Initialize user with dynamic UID
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.getVoices();
-      window.speechSynthesis.onvoiceschanged = () => {
-        window.speechSynthesis.getVoices();
-      };
-    }
+    updateUser({
+      ...prev,
+      uid: prev.uid?.startsWith('guest_user_') ? prev.uid : 'guest_user_' + Date.now().toString(36).slice(-5)
+    }));
+  }, []);
 
+  // Sync user profile when user data changes
+  useEffect(() => {
+    if (user.uid && !user.uid.startsWith('guest_user_')) {
+      syncUserProfile(user);
+    }
+  }, [user.uid]);
+
+  // Show speech consent dialog on first visit
+  useEffect(() => {
     const consent = localStorage.getItem('agritech_speech_consent');
     if (consent === 'true') {
       setTimeout(() => setSpeechEnabled(true), 0);
     } else if (consent === null) {
       setTimeout(() => setShowSpeechConsent(true), 1500);
     }
-
-    if (user.uid) {
-      syncUserProfile(user);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    const handleBeforeInstallPrompt = (e: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
-      e.preventDefault();
-      setInstallPrompt(e);
-    };
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-  }, []);
-
-  const stopSpeech = () => {
-    if (window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-    }
-    setIsSpeaking(false);
-  };
-
-  const playSpeech = (text: string) => {
-    if (!speechEnabled || !window.speechSynthesis || !text) return;
-    
-    window.speechSynthesis.cancel();
-    setIsSpeaking(false);
-    
-    setTimeout(() => {
-      const cleanText = text.replace(/[*#_~]/g, '').trim();
-      if (!cleanText) return;
-
-      const utterance = new SpeechSynthesisUtterance(cleanText);
-      utterance.lang = lang === 'bn' ? 'bn-BD' : 'en-US';
-      utterance.rate = 0.95; 
-      utterance.pitch = 1.0;
-
-      const voices = window.speechSynthesis.getVoices();
-      const targetLang = lang === 'bn' ? 'bn' : 'en';
-      const preferredVoice = voices.find(v => v.lang.toLowerCase().includes(targetLang));
-      if (preferredVoice) utterance.voice = preferredVoice;
-
-      utterance.onstart = () => setIsSpeaking(true);
-      utterance.onend = () => setIsSpeaking(false);
-      utterance.onerror = (event) => {
-        if (event.error !== 'interrupted') {
-          console.warn("Native Speech Warning:", event.error);
-        }
-        setIsSpeaking(false);
-      };
-
-      window.speechSynthesis.speak(utterance);
-    }, 100);
-  };
-
-  const handleSpeechConsent = (enabled: boolean) => {
-    setSpeechEnabled(enabled);
-    localStorage.setItem('agritech_speech_consent', enabled.toString());
-    setShowSpeechConsent(false);
-    if (enabled) {
-      playSpeech(lang === 'bn' ? "ভয়েস সার্ভিস চালু করা হয়েছে। আপনাকে ধন্যবাদ।" : "Voice service enabled. Thank you.");
-    }
-  };
-
-  const handleNavigate = useCallback((view: View) => {
-    stopSpeech();
-    setCurrentView(view);
-    setIsDrawerOpen(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
-
-  const handleAction = (xp: number) => {
-    setSessionXpGain(prev => prev + xp);
-    setUser(prev => ({
-      ...prev,
-      progress: {
-        ...prev.progress,
-        xp: prev.progress.xp + xp,
-        level: Math.floor((prev.progress.xp + xp) / 500) + 1
-      }
-    }));
-  };
+  }, [setSpeechEnabled]);
 
   const handleSaveReport = async (report: Omit<SavedReport, 'id' | 'timestamp'>) => {
     const newReport: SavedReport = {
@@ -189,22 +122,14 @@ const App: React.FC = () => {
       id: Math.random().toString(36).substr(2, 9),
       timestamp: Date.now()
     };
-    
-    setUser(prev => ({
-      ...prev,
-      savedReports: [newReport, ...prev.savedReports]
-    }));
 
-    if (user.uid) {
+    updateUser({ savedReports: [newReport, ...user.savedReports] });
+
+    if (user.uid && !user.uid.startsWith('guest_user_')) {
       saveReportToSupabase(user.uid, newReport);
     }
   };
 
-  useEffect(() => {
-    const onGlobalNav = (e: any) => handleNavigate(e.detail as View); // eslint-disable-line @typescript-eslint/no-explicit-any
-    window.addEventListener('agritech_navigate', onGlobalNav);
-    return () => window.removeEventListener('agritech_navigate', onGlobalNav);
-  }, [handleNavigate]);
 
   const renderView = () => {
     switch (currentView) {
@@ -261,7 +186,7 @@ const App: React.FC = () => {
       case View.LEARNING_CENTER:
         return <LearningCenter onBack={() => handleNavigate(View.HOME)} onAction={handleAction} />;
       case View.PROFILE:
-        return <UserProfile user={user} onUpdateUser={(updates) => setUser(prev => ({ ...prev, ...updates }))} onSaveReport={handleSaveReport} onToggleSpeech={() => setSpeechEnabled(!speechEnabled)} speechEnabled={speechEnabled} onBack={() => handleNavigate(View.HOME)} lang={lang} />;
+        return <UserProfile user={user} onUpdateUser={(updates) => updateUser(updates))} onSaveReport={handleSaveReport} onToggleSpeech={() => setSpeechEnabled(!speechEnabled)} speechEnabled={speechEnabled} onBack={() => handleNavigate(View.HOME)} lang={lang} />;
       case View.ABOUT:
         return <About onNavigate={handleNavigate} onBack={() => handleNavigate(View.HOME)} />;
       case View.FLASHCARDS:
