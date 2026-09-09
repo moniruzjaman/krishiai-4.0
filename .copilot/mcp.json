@@ -1,0 +1,10 @@
+{
+  "tools": {
+    "graphify": {
+      "package": "graphify",
+      "path": "./node_modules/graphify",
+      "expose": true,
+      "description": "Graphify MCP integration for modular graph-based workflows"
+    }
+  }
+}
